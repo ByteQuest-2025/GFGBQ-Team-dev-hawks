@@ -11,6 +11,8 @@ import { Input } from "@/components/ui/input";
 import api from "@/lib/api";
 import { Loader2, CheckCircle, MapPin, LogOut, HardHat, Calendar, Clock, LayoutDashboard, Upload } from "lucide-react";
 import { motion } from "framer-motion";
+import { LanguageSelector } from "@/components/LanguageSelector";
+import { useLanguage } from "@/hooks/useLanguage";
 
 interface Grievance {
   id: number;
@@ -26,6 +28,7 @@ interface Grievance {
 
 export default function FieldOfficerDashboard() {
   const router = useRouter();
+  const { t } = useLanguage();
   const [grievances, setGrievances] = useState<Grievance[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedGrievance, setSelectedGrievance] = useState<Grievance | null>(null);
@@ -137,15 +140,18 @@ export default function FieldOfficerDashboard() {
                       <p className="text-xs text-slate-500">Task Management</p>
                   </div>
               </div>
-              <Button variant="ghost" size="sm" className="text-slate-500 hover:text-red-600" asChild>
-                  <a href="/"><LogOut className="h-4 w-4 mr-2" /> Log Out</a>
-              </Button>
+              <div className="flex items-center gap-3">
+                  <LanguageSelector variant="ghost" />
+                  <Button variant="ghost" size="sm" className="text-slate-500 hover:text-red-600" onClick={handleLogout}>
+                      <LogOut className="h-4 w-4 mr-2" /> {t("logout")}
+                  </Button>
+              </div>
           </div>
       </header>
 
       <main className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="mb-6">
-            <h2 className="text-2xl font-bold text-slate-900">Assigned Tasks</h2>
+            <h2 className="text-2xl font-bold text-slate-900">{t("myTasks")}</h2>
             <p className="text-slate-500">Prioritize critical issues and upload proof of resolution.</p>
         </div>
 

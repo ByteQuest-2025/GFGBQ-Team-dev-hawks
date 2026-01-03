@@ -10,9 +10,12 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { AlertCircle, Loader2, ArrowRight, Lock, Mail } from "lucide-react";
 import api from "@/lib/api";
+import { LanguageSelector } from "@/components/LanguageSelector";
+import { useLanguage } from "@/hooks/useLanguage";
 
 export default function LoginPage() {
   const router = useRouter();
+  const { t } = useLanguage();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -54,6 +57,9 @@ export default function LoginPage() {
       <div className="absolute inset-0 overflow-hidden">
         <div className="absolute -top-[40%] -left-[20%] w-[70%] h-[70%] rounded-full bg-purple-500/20 blur-[100px]" />
         <div className="absolute -bottom-[40%] -right-[20%] w-[70%] h-[70%] rounded-full bg-blue-500/20 blur-[100px]" />
+      </div>
+      <div className="absolute top-4 right-4 z-20">
+        <LanguageSelector variant="outline" className="[&_*]:text-white [&_button]:border-white/20 [&_button]:bg-white/10" />
       </div>
 
       <motion.div

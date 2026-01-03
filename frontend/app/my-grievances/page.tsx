@@ -9,6 +9,9 @@ import api from "@/lib/api";
 import { Loader2, CheckCircle, MapPin, LogOut, Calendar, Plus, Search, ArrowRight } from "lucide-react";
 import { motion } from "framer-motion";
 import Link from "next/link";
+import { LanguageSelector } from "@/components/LanguageSelector";
+import { useLanguage } from "@/hooks/useLanguage";
+import { Chatbot } from "@/components/Chatbot";
 
 interface Grievance {
   id: number;
@@ -24,6 +27,7 @@ interface Grievance {
 
 export default function MyGrievances() {
   const router = useRouter();
+  const { t } = useLanguage();
   const [grievances, setGrievances] = useState<Grievance[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -103,11 +107,12 @@ export default function MyGrievances() {
                   <h1 className="text-sm font-medium text-slate-500 hidden sm:block">My Grievances</h1>
               </div>
               <div className="flex items-center gap-4">
+                  <LanguageSelector variant="ghost" className="hidden sm:flex" />
                   <Button variant="default" size="sm" asChild className="hidden sm:flex bg-blue-600 hover:bg-blue-700">
-                      <Link href="/"><Plus className="h-4 w-4 mr-2" /> New Report</Link>
+                      <Link href="/"><Plus className="h-4 w-4 mr-2" /> {t("reportTitle")}</Link>
                   </Button>
                   <Button variant="ghost" size="sm" className="text-slate-500 hover:text-red-600" onClick={handleLogout}>
-                      <LogOut className="h-4 w-4 mr-2" /> <span className="hidden sm:inline">Log Out</span>
+                      <LogOut className="h-4 w-4 mr-2" /> <span className="hidden sm:inline">{t("logout")}</span>
                   </Button>
               </div>
           </div>
@@ -191,6 +196,7 @@ export default function MyGrievances() {
           )}
         </motion.div>
       </main>
+      <Chatbot />
     </div>
   );
 }

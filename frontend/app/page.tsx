@@ -9,6 +9,9 @@ import { Textarea } from "@/components/ui/textarea";
 import api from "@/lib/api";
 import { AlertCircle, CheckCircle2, Upload, Loader2, Menu, X, Lock, Mic } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { LanguageSelector } from "@/components/LanguageSelector";
+import { getLanguageFromStorage, getTranslation, type Language } from "@/lib/languages";
+import { Chatbot } from "@/components/Chatbot";
 
 export default function Home() {
   const [title, setTitle] = useState("");
@@ -21,7 +24,7 @@ export default function Home() {
   const [success, setSuccess] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<any>(null);
-  const [lang, setLang] = useState<"en" | "hi">("en");
+  const [lang, setLang] = useState<Language>(() => getLanguageFromStorage());
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [userRole, setUserRole] = useState<string | null>(null);
@@ -33,6 +36,7 @@ export default function Home() {
       const role = typeof window !== 'undefined' ? localStorage.getItem('role') : null;
       setIsLoggedIn(!!token);
       setUserRole(role);
+      setLang(getLanguageFromStorage());
   }, []);
 
   const handleLogout = () => {
@@ -46,7 +50,11 @@ export default function Home() {
   const startListening = (field: "title" | "description") => {
     if (typeof window !== 'undefined' && 'webkitSpeechRecognition' in window) {
       const recognition = new (window as any).webkitSpeechRecognition();
-      recognition.lang = lang === "hi" ? "hi-IN" : "en-US";
+      const langMap: Record<Language, string> = {
+        en: "en-US", hi: "hi-IN", ta: "ta-IN", te: "te-IN", bn: "bn-IN",
+        mr: "mr-IN", gu: "gu-IN", kn: "kn-IN", ml: "ml-IN", pa: "pa-IN", ur: "ur-IN"
+      };
+      recognition.lang = langMap[lang] || "en-US";
       recognition.continuous = false;
       recognition.interimResults = false;
 
@@ -81,60 +89,7 @@ export default function Home() {
     }
   };
 
-  const t = {
-    en: {
-      title: "CivicPulse",
-      subtitle: "AI-Driven Grievance Redressal System. Report issues, track status, and improve your city.",
-      reportTitle: "Report a Grievance",
-      reportDesc: "Describe the issue you are facing. Our AI will automatically categorize and route it to the right department.",
-      fieldLabel: "Title",
-      descLabel: "Description",
-      submit: "Submit Grievance",
-      submitting: "Submitting...",
-      success: "Grievance submitted successfully!",
-      error: "Failed to submit grievance.",
-      adminLink: "Admin Portal",
-      fieldLink: "Field Officer Portal",
-      login: "Login",
-      signup: "Sign Up",
-      logout: "Logout",
-      dashboard: "Dashboard",
-      features: "Why use CivicPulse?",
-      feature1: "AI-Powered Routing",
-      feature1Desc: "Automatically sends your report to the right department.",
-      feature2: "Real-time Tracking",
-      feature2Desc: "Monitor the status of your grievance every step of the way.",
-      feature3: "Quick Resolution",
-      feature3Desc: "Our streamlined process ensures faster response times.",
-      consentText: "I consent to the processing of my data for grievance redressal.",
-    },
-    hi: {
-      title: "CivicPulse (नागरिक पल्स)",
-      subtitle: "एआई-संचालित शिकायत निवारण प्रणाली। समस्याओं की रिपोर्ट करें, स्थिति ट्रैक करें और अपने शहर को बेहतर बनाएं।",
-      reportTitle: "शिकायत दर्ज करें",
-      reportDesc: "जिस समस्या का आप सामना कर रहे हैं उसका वर्णन करें। हमारा एआई इसे स्वचालित रूप से वर्गीकृत करेगा और सही विभाग को भेजेगा।",
-      fieldLabel: "शीर्षक",
-      descLabel: "विवरण",
-      submit: "शिकायत जमा करें",
-      submitting: "जमा हो रहा है...",
-      success: "शिकायत सफलतापूर्वक जमा की गई!",
-      error: "शिकायत जमा करने में विफल।",
-      adminLink: "एडमिन पोर्टल",
-      fieldLink: "फील्ड अधिकारी पोर्टल",
-      login: "लॉगिन",
-      signup: "साइन अप",
-      logout: "लॉग आउट",
-      dashboard: "डैशबोर्ड",
-      features: "CivicPulse क्यों चुनें?",
-      feature1: "एआई-संचालित रूटिंग",
-      feature1Desc: "आपकी रिपोर्ट को स्वचालित रूप से सही विभाग में भेजता है।",
-      feature2: "रियल-टाइम ट्रैकिंग",
-      feature2Desc: "हर कदम पर अपनी शिकायत की स्थिति की निगरानी करें।",
-      feature3: "त्वरित समाधान",
-      feature3Desc: "हमारी सुव्यवस्थित प्रक्रिया तेजी से प्रतिक्रिया समय सुनिश्चित करती है।",
-      consentText: "मैं शिकायत निवारण के लिए अपने डेटा के प्रसंस्करण के लिए सहमति देता हूं।",
-    }
-  };
+  const t = (key: string) => getTranslation(key, lang);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -192,26 +147,24 @@ export default function Home() {
             </div>
             
             <div className="hidden md:flex items-center gap-4">
-              <Button variant="ghost" onClick={() => setLang(lang === "en" ? "hi" : "en")}>
-                {lang === "en" ? "हिंदी" : "English"}
-              </Button>
+              <LanguageSelector variant="ghost" />
               
               {isLoggedIn ? (
                   <>
                     <Button variant="ghost" asChild>
-                        <a href={userRole === "Admin" ? "/admin/dashboard" : userRole === "FieldOfficer" ? "/field-officer/dashboard" : "/my-grievances"}>{t[lang].dashboard}</a>
+                        <a href={userRole === "Admin" ? "/admin/dashboard" : userRole === "FieldOfficer" ? "/field-officer/dashboard" : "/my-grievances"}>{t("dashboard")}</a>
                     </Button>
                     <Button variant="outline" onClick={handleLogout} className="border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700">
-                        {t[lang].logout}
+                        {t("logout")}
                     </Button>
                   </>
               ) : (
                   <>
                     <Button variant="ghost" asChild>
-                        <a href="/login">{t[lang].login}</a>
+                        <a href="/login">{t("login")}</a>
                     </Button>
                     <Button asChild className="bg-blue-600 hover:bg-blue-700">
-                        <a href="/signup">{t[lang].signup}</a>
+                        <a href="/signup">{t("signup")}</a>
                     </Button>
                   </>
               )}
@@ -234,26 +187,26 @@ export default function Home() {
                     className="md:hidden bg-white border-b border-slate-200 overflow-hidden"
                 >
                     <div className="px-4 pt-2 pb-4 space-y-2">
-                        <Button variant="ghost" className="w-full justify-start" onClick={() => setLang(lang === "en" ? "hi" : "en")}>
-                            {lang === "en" ? "Change to Hindi" : "Change to English"}
-                        </Button>
+                        <div className="px-2 py-1">
+                            <LanguageSelector variant="ghost" className="w-full" />
+                        </div>
                         
                         {isLoggedIn ? (
                             <>
                                 <Button variant="ghost" className="w-full justify-start" asChild>
-                                    <a href={userRole === "Admin" ? "/admin/dashboard" : userRole === "FieldOfficer" ? "/field-officer/dashboard" : "/my-grievances"}>{t[lang].dashboard}</a>
+                                    <a href={userRole === "Admin" ? "/admin/dashboard" : userRole === "FieldOfficer" ? "/field-officer/dashboard" : "/my-grievances"}>{t("dashboard")}</a>
                                 </Button>
                                 <Button variant="ghost" className="w-full justify-start text-red-600" onClick={handleLogout}>
-                                    {t[lang].logout}
+                                    {t("logout")}
                                 </Button>
                             </>
                         ) : (
                             <>
                                 <Button variant="ghost" className="w-full justify-start" asChild>
-                                    <a href="/login">{t[lang].login}</a>
+                                    <a href="/login">{t("login")}</a>
                                 </Button>
                                 <Button className="w-full justify-start" asChild>
-                                    <a href="/signup">{t[lang].signup}</a>
+                                    <a href="/signup">{t("signup")}</a>
                                 </Button>
                             </>
                         )}
@@ -277,7 +230,7 @@ export default function Home() {
                         transition={{ duration: 0.5 }}
                         className="text-4xl tracking-tight font-extrabold text-slate-900 sm:text-5xl md:text-6xl"
                     >
-                        <span className="block xl:inline">{t[lang].title.split(" ")[0]}</span>{' '}
+                        <span className="block xl:inline">{t("title").split(" ")[0]}</span>{' '}
                         <span className="block text-blue-600 xl:inline">for a Better City</span>
                     </motion.h1>
                     <motion.p 
@@ -286,7 +239,7 @@ export default function Home() {
                         transition={{ duration: 0.5, delay: 0.1 }}
                         className="mt-3 text-base text-slate-500 sm:mt-5 sm:text-lg sm:max-w-xl sm:mx-auto md:mt-5 md:text-xl lg:mx-0"
                     >
-                        {t[lang].subtitle}
+                        {t("subtitle")}
                     </motion.p>
                     
                     <motion.div 
@@ -315,15 +268,15 @@ export default function Home() {
                     <div className="relative mx-auto w-full rounded-lg shadow-lg lg:max-w-md">
                         <Card className="border-0 shadow-2xl bg-white/90 backdrop-blur">
                             <CardHeader>
-                                <CardTitle className="text-xl text-blue-900">{t[lang].reportTitle}</CardTitle>
-                                <CardDescription>{t[lang].reportDesc}</CardDescription>
+                                <CardTitle className="text-xl text-blue-900">{t("reportTitle")}</CardTitle>
+                                <CardDescription>{t("reportDesc")}</CardDescription>
                             </CardHeader>
                             <CardContent>
                                 {isLoggedIn ? (
                                 <form onSubmit={handleSubmit} className="space-y-4">
                                     <div className="space-y-2">
                                         <div className="flex justify-between items-center">
-                                            <Label htmlFor="title">{t[lang].fieldLabel}</Label>
+                                            <Label htmlFor="title">{t("fieldLabel")}</Label>
                                             <Button
                                                 type="button"
                                                 variant="ghost"
@@ -336,7 +289,7 @@ export default function Home() {
                                         </div>
                                         <Input 
                                             id="title" 
-                                            placeholder={lang === "en" ? "e.g., Water leakage in Main St." : "उदाहरण: मुख्य सड़क पर पानी का रिसाव"}
+                                            placeholder={t("titlePlaceholder")}
                                             value={title}
                                             onChange={(e) => setTitle(e.target.value)}
                                             required
@@ -345,7 +298,7 @@ export default function Home() {
                                     </div>
                                     <div className="space-y-2">
                                         <div className="flex justify-between items-center">
-                                            <Label htmlFor="description">{t[lang].descLabel}</Label>
+                                            <Label htmlFor="description">{t("descLabel")}</Label>
                                             <Button
                                                 type="button"
                                                 variant="ghost"
@@ -358,7 +311,7 @@ export default function Home() {
                                         </div>
                                         <Textarea 
                                             id="description" 
-                                            placeholder={lang === "en" ? "Provide more details..." : "अधिक विवरण प्रदान करें..."}
+                                            placeholder={t("descPlaceholder")}
                                             value={description}
                                             onChange={(e) => setDescription(e.target.value)}
                                             required
@@ -399,7 +352,7 @@ export default function Home() {
                                             htmlFor="consent"
                                             className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
                                         >
-                                            {t[lang].consentText}
+                                            {t("consentText")}
                                         </label>
                                     </div>
                                     </div>
@@ -409,7 +362,7 @@ export default function Home() {
                                     </div>
                                     <Button type="submit" className="w-full bg-blue-600 hover:bg-blue-700 text-white shadow-md hover:shadow-lg transition-all" disabled={loading}>
                                         {!loading && <Upload className="mr-2 h-4 w-4" />}
-                                        {loading ? t[lang].submitting : t[lang].submit}
+                                        {loading ? t("submitting") : t("submit")}
                                     </Button>
                                 </form>
                                 ) : (
@@ -453,7 +406,7 @@ export default function Home() {
                         <CheckCircle2 className="h-6 w-6 text-green-600" />
                     </div>
                     <div className="space-y-1 flex-1">
-                        <p className="font-semibold text-green-900">{t[lang].success}</p>
+                        <p className="font-semibold text-green-900">{t("success")}</p>
                         {result && (
                             <div className="text-sm text-green-800">
                                 <p>Grievance ID: <span className="font-mono font-bold bg-green-100 px-1 rounded">{result.id}</span></p>
@@ -475,7 +428,7 @@ export default function Home() {
                         <AlertCircle className="h-6 w-6 text-red-600" />
                     </div>
                     <div className="flex-1">
-                         <p className="font-medium text-red-900">{t[lang].error}</p>
+                         <p className="font-medium text-red-900">{t("error")}</p>
                     </div>
                      <Button variant="ghost" size="sm" onClick={() => setError(null)} className="text-red-700 hover:text-red-900 hover:bg-red-100"><X className="h-4 w-4"/></Button>
                 </div>
@@ -490,16 +443,16 @@ export default function Home() {
             <div className="text-center">
                 <h2 className="text-base font-semibold text-blue-600 tracking-wide uppercase">Features</h2>
                 <p className="mt-2 text-3xl leading-8 font-extrabold tracking-tight text-slate-900 sm:text-4xl">
-                    {t[lang].features}
+                    {t("features")}
                 </p>
             </div>
 
             <div className="mt-10">
                 <div className="grid grid-cols-1 gap-10 sm:grid-cols-2 lg:grid-cols-3">
                     {[
-                        { title: t[lang].feature1, desc: t[lang].feature1Desc, icon: "🤖" },
-                        { title: t[lang].feature2, desc: t[lang].feature2Desc, icon: "📍" },
-                        { title: t[lang].feature3, desc: t[lang].feature3Desc, icon: "⚡" },
+                        { title: t("feature1"), desc: t("feature1Desc"), icon: "🤖" },
+                        { title: t("feature2"), desc: t("feature2Desc"), icon: "📍" },
+                        { title: t("feature3"), desc: t("feature3Desc"), icon: "⚡" },
                     ].map((feature, idx) => (
                         <motion.div 
                             key={idx}
@@ -523,6 +476,9 @@ export default function Home() {
             </div>
         </div>
       </div>
+
+      {/* Chatbot */}
+      <Chatbot />
       
       {/* Footer */}
       <footer className="bg-slate-900 text-white py-12">

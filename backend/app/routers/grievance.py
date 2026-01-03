@@ -68,7 +68,7 @@ def create_grievance(
     if image:
         file_extension = image.filename.split(".")[-1]
         filename = f"{uuid.uuid4()}.{file_extension}"
-        file_path = f"backend/uploads/{filename}"
+        file_path = f"uploads/{filename}"
         
         with open(file_path, "wb") as buffer:
             shutil.copyfileobj(image.file, buffer)
@@ -170,7 +170,7 @@ def resolve_grievance(
     if image:
         file_extension = image.filename.split(".")[-1]
         filename = f"resolution-{uuid.uuid4()}.{file_extension}"
-        file_path = f"backend/uploads/{filename}"
+        file_path = f"uploads/{filename}"
         with open(file_path, "wb") as buffer:
             shutil.copyfileobj(image.file, buffer)
             

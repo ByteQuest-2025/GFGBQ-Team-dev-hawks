@@ -8,3 +8,6 @@ passlib[bcrypt]
 argon2-cffi
 httpx
 pytest
+psycopg2-binary
+python-dotenv
+google-generativeai

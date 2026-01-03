@@ -120,3 +120,48 @@ def verify_grievance(
     db.commit()
     db.refresh(db_grievance)
     return db_grievance
+
+class HeatmapPoint(BaseModel):
+    lat: float
+    lng: float
+    weight: float
+    count: int
+
+@router.get("/heatmap", response_model=List[HeatmapPoint])
+def get_heatmap_data(db: Session = Depends(database.get_db)):
+    """
+    Get grievance locations for heatmap visualization.
+    Returns aggregated data points with coordinates and weights.
+    """
+    grievances = db.query(models.Grievance).filter(
+        models.Grievance.region_id.isnot(None)
+    ).all()
+    
+    # Group by region and aggregate
+    region_data = {}
+    for g in grievances:
+        if g.region and g.region.lat and g.region.lng:
+            region_key = f"{g.region.lat},{g.region.lng}"
+            if region_key not in region_data:
+                region_data[region_key] = {
+                    "lat": g.region.lat,
+                    "lng": g.region.lng,
+                    "count": 0,
+                    "total_severity": 0.0
+                }
+            region_data[region_key]["count"] += 1
+            if g.severity_ai:
+                region_data[region_key]["total_severity"] += g.severity_ai
+    
+    # Convert to heatmap points
+    heatmap_points = []
+    for key, data in region_data.items():
+        weight = data["total_severity"] / data["count"] if data["count"] > 0 else 0.5
+        heatmap_points.append(HeatmapPoint(
+            lat=data["lat"],
+            lng=data["lng"],
+            weight=weight,
+            count=data["count"]
+        ))
+    
+    return heatmap_points

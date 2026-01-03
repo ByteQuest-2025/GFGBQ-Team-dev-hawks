@@ -1,14 +1,23 @@
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
-from .app import models, database
-from .app.routers import grievance, admin, auth, metadata
-
-models.Base.metadata.create_all(bind=database.engine)
+from app import models, database
+from app.routers import grievance, admin, auth, metadata, chat
 
 app = FastAPI(title="CivicPulse API", description="AI-driven grievance redressal platform")
 
-app.mount("/uploads", StaticFiles(directory="backend/uploads"), name="uploads")
+# Create tables on startup (non-blocking)
+@app.on_event("startup")
+async def startup_event():
+    try:
+        print("Creating database tables...")
+        models.Base.metadata.create_all(bind=database.engine)
+        print("✅ Database tables ready")
+    except Exception as e:
+        print(f"⚠️  Warning: Could not create tables: {e}")
+        print("   The server will still start, but database operations may fail.")
+
+app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
 
 # CORS
 origins = [
@@ -29,6 +38,7 @@ app.include_router(auth.router)
 app.include_router(grievance.router)
 app.include_router(admin.router)
 app.include_router(metadata.router)
+app.include_router(chat.router)
 
 @app.get("/")
 def read_root():
