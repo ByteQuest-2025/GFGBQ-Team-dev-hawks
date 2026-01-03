@@ -52,12 +52,54 @@ export default function AdminGrievances() {
   const [officers, setOfficers] = useState<Officer[]>([]);
   const [loading, setLoading] = useState(false);
   const [filterStatus, setFilterStatus] = useState<string>("All");
+  const [stateCounts, setStateCounts] = useState<Record<string, number>>({});
+  const [districtCounts, setDistrictCounts] = useState<Record<string, number>>({});
 
   useEffect(() => {
     if (view === "dashboard" && selectedDistrict) {
       fetchDashboardData();
     }
   }, [view, selectedDistrict, filterStatus]);
+
+  useEffect(() => {
+    if (view === "states") {
+      fetchStateCounts();
+    }
+  }, [view]);
+
+  useEffect(() => {
+    if (view === "districts" && selectedState) {
+      fetchDistrictCounts();
+    }
+  }, [view, selectedState]);
+
+  const fetchStateCounts = async () => {
+    try {
+      const response = await api.get("/admin/grievance-counts/states");
+      const counts: Record<string, number> = {};
+      response.data.forEach((item: { state: string; count: number }) => {
+        counts[item.state] = item.count;
+      });
+      setStateCounts(counts);
+    } catch (error) {
+      console.error("Failed to fetch state counts", error);
+      setStateCounts({});
+    }
+  };
+
+  const fetchDistrictCounts = async () => {
+    try {
+      const response = await api.get(`/admin/grievance-counts/districts?state=${encodeURIComponent(selectedState)}`);
+      const counts: Record<string, number> = {};
+      response.data.forEach((item: { district: string; count: number }) => {
+        counts[item.district] = item.count;
+      });
+      setDistrictCounts(counts);
+    } catch (error) {
+      console.error("Failed to fetch district counts", error);
+      setDistrictCounts({});
+    }
+  };
 
   const fetchDashboardData = async () => {
     setLoading(true);
@@ -156,37 +198,53 @@ export default function AdminGrievances() {
         {/* View: States Grid */}
         {view === "states" && (
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                {Object.keys(indianStatesAndDistricts).map((state) => (
-                    <Card 
-                        key={state} 
-                        className="hover:shadow-lg transition-all cursor-pointer hover:border-blue-500 group"
-                        onClick={() => handleStateClick(state)}
-                    >
-                        <CardContent className="p-6 flex flex-col items-center justify-center text-center space-y-2">
-                            <MapPin className="w-8 h-8 text-blue-500 group-hover:scale-110 transition-transform" />
-                            <span className="font-semibold text-lg">{state}</span>
-                            <span className="text-xs text-gray-500">{indianStatesAndDistricts[state].length} Districts</span>
-                        </CardContent>
-                    </Card>
-                ))}
+                {Object.keys(indianStatesAndDistricts).map((state) => {
+                    const count = stateCounts[state] || 0;
+                    return (
+                        <Card 
+                            key={state} 
+                            className="hover:shadow-lg transition-all cursor-pointer hover:border-blue-500 group relative"
+                            onClick={() => handleStateClick(state)}
+                        >
+                            <CardContent className="p-6 flex flex-col items-center justify-center text-center space-y-2">
+                                <div className="absolute top-3 right-3">
+                                    <div className="bg-blue-500 rounded-full w-8 h-8 flex items-center justify-center shadow-sm">
+                                        <span className="text-white text-sm font-semibold">{count}</span>
+                                    </div>
+                                </div>
+                                <MapPin className="w-8 h-8 text-blue-500 group-hover:scale-110 transition-transform" />
+                                <span className="font-semibold text-lg">{state}</span>
+                                <span className="text-xs text-gray-500">{indianStatesAndDistricts[state].length} Districts</span>
+                            </CardContent>
+                        </Card>
+                    );
+                })}
             </div>
         )}
 
         {/* View: Districts Grid */}
         {view === "districts" && (
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                {indianStatesAndDistricts[selectedState]?.map((district) => (
-                    <Card 
-                        key={district} 
-                        className="hover:shadow-lg transition-all cursor-pointer hover:border-blue-500 group"
-                        onClick={() => handleDistrictClick(district)}
-                    >
-                        <CardContent className="p-6 flex flex-col items-center justify-center text-center space-y-2">
-                            <MapPin className="w-8 h-8 text-green-500 group-hover:scale-110 transition-transform" />
-                            <span className="font-semibold text-lg">{district}</span>
-                        </CardContent>
-                    </Card>
-                ))}
+                {indianStatesAndDistricts[selectedState]?.map((district) => {
+                    const count = districtCounts[district] || 0;
+                    return (
+                        <Card 
+                            key={district} 
+                            className="hover:shadow-lg transition-all cursor-pointer hover:border-blue-500 group relative"
+                            onClick={() => handleDistrictClick(district)}
+                        >
+                            <CardContent className="p-6 flex flex-col items-center justify-center text-center space-y-2">
+                                <div className="absolute top-3 right-3">
+                                    <div className="bg-blue-500 rounded-full w-8 h-8 flex items-center justify-center shadow-sm">
+                                        <span className="text-white text-sm font-semibold">{count}</span>
+                                    </div>
+                                </div>
+                                <MapPin className="w-8 h-8 text-blue-500 group-hover:scale-110 transition-transform" />
+                                <span className="font-semibold text-lg">{district}</span>
+                            </CardContent>
+                        </Card>
+                    );
+                })}
             </div>
         )}
 

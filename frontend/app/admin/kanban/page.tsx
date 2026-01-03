@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import api from "@/lib/api";
-import { Loader2, ArrowLeft, LayoutDashboard, ListTodo, Map, Settings, LogOut, MoreHorizontal, Calendar, User } from "lucide-react";
+import { Loader2, ArrowLeft, LayoutDashboard, ListTodo, Map, LogOut, MoreHorizontal, Calendar, User } from "lucide-react";
 import { motion } from "framer-motion";
 import { DragDropContext, Droppable, Draggable, DropResult } from "@hello-pangea/dnd";
 
@@ -134,10 +134,6 @@ export default function KanbanBoard() {
             <a href="/admin/kanban" className="flex items-center gap-3 px-4 py-3 bg-blue-600 rounded-lg text-white font-medium transition-all shadow-lg shadow-blue-900/20">
                 <Map size={20} />
                 Kanban Board
-            </a>
-            <a href="#" className="flex items-center gap-3 px-4 py-3 text-slate-300 hover:text-white hover:bg-slate-800 rounded-lg transition-all">
-                <Settings size={20} />
-                Settings
             </a>
         </nav>
         <div className="p-4 border-t border-slate-800">

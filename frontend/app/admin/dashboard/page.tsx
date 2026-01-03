@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import api from "@/lib/api";
-import { Loader2, ArrowRight, LayoutDashboard, ListTodo, Map, Settings, LogOut, TrendingUp, AlertTriangle, CheckCircle, Clock } from "lucide-react";
+import { Loader2, ArrowRight, LayoutDashboard, ListTodo, Map, LogOut, TrendingUp, AlertTriangle, CheckCircle, Clock } from "lucide-react";
 import { motion } from "framer-motion";
 import { LanguageSelector } from "@/components/LanguageSelector";
 import { useLanguage } from "@/hooks/useLanguage";
@@ -96,10 +96,6 @@ export default function Dashboard() {
             <a href="/admin/kanban" className="flex items-center gap-3 px-4 py-3 text-slate-300 hover:text-white hover:bg-slate-800 rounded-lg transition-all">
                 <Map size={20} />
                 {t("kanbanBoard")}
-            </a>
-            <a href="#" className="flex items-center gap-3 px-4 py-3 text-slate-300 hover:text-white hover:bg-slate-800 rounded-lg transition-all">
-                <Settings size={20} />
-                {t("settings")}
             </a>
         </nav>
         <div className="p-4 border-t border-slate-800 space-y-2">

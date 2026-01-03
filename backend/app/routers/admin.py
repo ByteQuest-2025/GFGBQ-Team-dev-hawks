@@ -217,3 +217,55 @@ def get_heatmap_data(db: Session = Depends(database.get_db)):
         ))
     
     return heatmap_points
+
+class StateCount(BaseModel):
+    state: str
+    count: int
+
+class DistrictCount(BaseModel):
+    district: str
+    count: int
+
+@router.get("/grievance-counts/states", response_model=List[StateCount])
+def get_state_counts(db: Session = Depends(database.get_db)):
+    """
+    Get total grievance count for each state (aggregated across all districts).
+    """
+    state_counts_query = (
+        db.query(
+            models.Grievance.state,
+            func.count(models.Grievance.id).label("count")
+        )
+        .filter(models.Grievance.state.isnot(None))
+        .group_by(models.Grievance.state)
+        .all()
+    )
+    
+    return [
+        StateCount(state=state, count=count)
+        for state, count in state_counts_query
+    ]
+
+@router.get("/grievance-counts/districts", response_model=List[DistrictCount])
+def get_district_counts(
+    state: str,
+    db: Session = Depends(database.get_db)
+):
+    """
+    Get total grievance count for each district in a given state.
+    """
+    district_counts_query = (
+        db.query(
+            models.Grievance.district,
+            func.count(models.Grievance.id).label("count")
+        )
+        .filter(models.Grievance.state == state)
+        .filter(models.Grievance.district.isnot(None))
+        .group_by(models.Grievance.district)
+        .all()
+    )
+    
+    return [
+        DistrictCount(district=district, count=count)
+        for district, count in district_counts_query
+    ]

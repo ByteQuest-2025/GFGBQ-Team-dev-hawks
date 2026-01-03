@@ -6,7 +6,7 @@ import { motion } from "framer-motion";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import api from "@/lib/api";
-import { Loader2, MapPin, Calendar, AlertTriangle, ArrowLeft, CheckCircle2, XCircle, Clock, Star } from "lucide-react";
+import { Loader2, MapPin, Calendar, AlertTriangle, ArrowLeft, CheckCircle2, XCircle, Clock, Star, Image as ImageIcon, CheckCircle } from "lucide-react";
 import Link from "next/link";
 
 interface Grievance {
@@ -19,6 +19,13 @@ interface Grievance {
   ai_summary: string;
   created_at: string;
   image_url?: string;
+  location?: string;
+  state?: string;
+  district?: string;
+  media?: {
+      url: string;
+      type: string;
+  }[];
   feedback?: {
       rating: number;
       comment: string;
@@ -164,13 +171,18 @@ export default function GrievanceDetails() {
                         <CardTitle className="text-3xl font-bold text-white">{grievance.title}</CardTitle>
                     </motion.div>
                     <motion.div variants={item}>
-                        <CardDescription className="flex items-center gap-4 text-slate-300 mt-2">
+                        <CardDescription className="flex flex-wrap items-center gap-4 text-slate-300 mt-2">
                             <span className="flex items-center gap-1">
                                 <Calendar className="h-4 w-4" /> {new Date(grievance.created_at).toLocaleDateString()}
                             </span>
                             <span className="flex items-center gap-1">
                                 <Clock className="h-4 w-4" /> {new Date(grievance.created_at).toLocaleTimeString()}
                             </span>
+                            {grievance.location && (
+                                <span className="flex items-center gap-1">
+                                    <MapPin className="h-4 w-4" /> {grievance.location}
+                                </span>
+                            )}
                         </CardDescription>
                     </motion.div>
                 </div>
@@ -182,6 +194,32 @@ export default function GrievanceDetails() {
                 </div>
             </CardHeader>
             <CardContent className="space-y-8 pt-8">
+                {/* Image Section - Display prominently at the top */}
+                {(grievance.image_url || (grievance.media && grievance.media.length > 0)) && (
+                <motion.div variants={item} className="space-y-3">
+                    <h3 className="text-xl font-semibold flex items-center gap-2">
+                        <span className="p-1 bg-purple-500/20 rounded-md"><ImageIcon className="h-5 w-5 text-purple-400" /></span>
+                        Evidence Photo
+                    </h3>
+                    <div className="rounded-xl overflow-hidden border border-white/20 bg-black/40 relative group">
+                        <img 
+                            src={`http://127.0.0.1:8000${grievance.image_url || (grievance.media && grievance.media[0]?.url) || ''}`} 
+                            alt="Grievance Evidence" 
+                            className="w-full max-h-[600px] object-contain bg-black/20 transition-transform duration-500 group-hover:scale-[1.02]"
+                            onError={(e) => {
+                                console.error("Image failed to load:", e);
+                                const target = e.target as HTMLImageElement;
+                                target.style.display = 'none';
+                            }}
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-4 pointer-events-none">
+                            <p className="text-white font-medium">Uploaded Evidence</p>
+                        </div>
+                    </div>
+                </motion.div>
+                )}
+
+                {/* Description Section */}
                 <motion.div variants={item} className="space-y-3">
                     <h3 className="text-xl font-semibold flex items-center gap-2">
                         <span className="p-1 bg-blue-500/20 rounded-md"><CheckCircle2 className="h-5 w-5 text-blue-400" /></span>
@@ -192,20 +230,59 @@ export default function GrievanceDetails() {
                     </div>
                 </motion.div>
 
-                {grievance.image_url && (
+                {/* Location Information */}
+                {(grievance.location || grievance.state || grievance.district) && (
                 <motion.div variants={item} className="space-y-3">
                     <h3 className="text-xl font-semibold flex items-center gap-2">
-                        <span className="p-1 bg-purple-500/20 rounded-md"><MapPin className="h-5 w-5 text-purple-400" /></span>
-                        Evidence
+                        <span className="p-1 bg-green-500/20 rounded-md"><MapPin className="h-5 w-5 text-green-400" /></span>
+                        Location Details
                     </h3>
-                    <div className="rounded-xl overflow-hidden border border-white/20 bg-black/40 relative group">
-                        <img 
-                            src={`http://127.0.0.1:8000${grievance.image_url}`} 
-                            alt="Grievance Evidence" 
-                            className="w-full max-h-[500px] object-cover transition-transform duration-500 group-hover:scale-105"
-                        />
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-4">
-                            <p className="text-white font-medium">Uploaded Evidence</p>
+                    <div className="bg-black/20 p-6 rounded-xl border border-white/5 space-y-2">
+                        {grievance.location && (
+                            <div className="flex items-center gap-2 text-slate-300">
+                                <MapPin className="h-4 w-4 text-slate-400" />
+                                <span className="font-medium">Address:</span>
+                                <span>{grievance.location}</span>
+                            </div>
+                        )}
+                        {(grievance.state || grievance.district) && (
+                            <div className="flex items-center gap-2 text-slate-300">
+                                <MapPin className="h-4 w-4 text-slate-400" />
+                                <span className="font-medium">Area:</span>
+                                <span>{grievance.district && grievance.state ? `${grievance.district}, ${grievance.state}` : grievance.district || grievance.state}</span>
+                            </div>
+                        )}
+                    </div>
+                </motion.div>
+                )}
+
+                {/* Resolution Proof Section - Show when resolved or pending verification */}
+                {(grievance.status === "Resolved" || grievance.status === "Pending Verification") && 
+                 grievance.media && grievance.media.find(m => m.type === "resolution_image") && (
+                <motion.div variants={item} className="space-y-3">
+                    <h3 className="text-xl font-semibold flex items-center gap-2">
+                        <span className="p-1 bg-green-500/20 rounded-md"><CheckCircle className="h-5 w-5 text-green-400" /></span>
+                        Resolution Proof
+                    </h3>
+                    <div className="bg-green-900/10 border border-green-500/30 rounded-xl p-4 space-y-3">
+                        <p className="text-sm text-green-300 font-medium flex items-center gap-2">
+                            <CheckCircle className="h-4 w-4" />
+                            Field Officer has uploaded proof of resolution
+                        </p>
+                        <div className="rounded-xl overflow-hidden border border-white/20 bg-black/40 relative group">
+                            <img 
+                                src={`http://127.0.0.1:8000${grievance.media.find(m => m.type === "resolution_image")?.url}`} 
+                                alt="Resolution Proof" 
+                                className="w-full max-h-[600px] object-contain bg-black/20 transition-transform duration-500 group-hover:scale-[1.02]"
+                                onError={(e) => {
+                                    console.error("Resolution image failed to load:", e);
+                                    const target = e.target as HTMLImageElement;
+                                    target.style.display = 'none';
+                                }}
+                            />
+                            <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-4 pointer-events-none">
+                                <p className="text-white font-medium">Resolution Proof by Field Officer</p>
+                            </div>
                         </div>
                     </div>
                 </motion.div>
