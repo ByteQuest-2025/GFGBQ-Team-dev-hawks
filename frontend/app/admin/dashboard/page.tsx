@@ -11,11 +11,17 @@ import { LanguageSelector } from "@/components/LanguageSelector";
 import { useLanguage } from "@/hooks/useLanguage";
 import { GoogleMapsHeatmap } from "@/components/GoogleMapsHeatmap";
 
+interface Hotspot {
+  name: string;
+  count: number;
+}
+
 interface DashboardStats {
   total_grievances: number;
   open_grievances: number;
   resolved_grievances: number;
   critical_grievances: number;
+  top_hotspots: Hotspot[];
 }
 
 interface HeatmapPoint {
@@ -240,12 +246,17 @@ export default function Dashboard() {
                     </CardHeader>
                     <CardContent>
                         <div className="space-y-6">
-                            {[
-                                { name: "Downtown Market", count: 12, color: "bg-red-500", text: "text-red-500" },
-                                { name: "Industrial Area", count: 8, color: "bg-orange-500", text: "text-orange-500" },
-                                { name: "North Avenue", count: 5, color: "bg-yellow-500", text: "text-yellow-500" },
-                                { name: "Central Park", count: 3, color: "bg-blue-500", text: "text-blue-500" },
-                            ].map((spot, i) => (
+                            {(stats?.top_hotspots && stats.top_hotspots.length > 0 ? stats.top_hotspots : []).map((spot, i) => {
+                                const colors = [
+                                    { bg: "bg-red-500", text: "text-red-500" },
+                                    { bg: "bg-orange-500", text: "text-orange-500" },
+                                    { bg: "bg-yellow-500", text: "text-yellow-500" },
+                                    { bg: "bg-blue-500", text: "text-blue-500" },
+                                ];
+                                const color = colors[i % colors.length];
+                                const maxCount = Math.max(...(stats?.top_hotspots?.map(h => h.count) || [1]), 1);
+                                
+                                return (
                                 <motion.div 
                                     key={spot.name} 
                                     initial={{ width: 0 }}
@@ -256,19 +267,25 @@ export default function Dashboard() {
                                     <div className="w-full space-y-2">
                                         <div className="flex justify-between text-sm font-medium">
                                             <span className="group-hover:text-slate-900 text-slate-700 transition-colors">{spot.name}</span>
-                                            <span className={`${spot.text} font-bold`}>{spot.count}</span>
+                                            <span className={`${color.text} font-bold`}>{spot.count}</span>
                                         </div>
                                         <div className="h-2 w-full rounded-full bg-slate-100 overflow-hidden">
                                             <motion.div 
                                                 initial={{ width: 0 }}
-                                                animate={{ width: `${(spot.count / 15) * 100}%` }}
+                                                animate={{ width: `${(spot.count / maxCount) * 100}%` }}
                                                 transition={{ duration: 1, delay: 0.5 + (i * 0.1) }}
-                                                className={`h-full rounded-full ${spot.color}`} 
+                                                className={`h-full rounded-full ${color.bg}`} 
                                             ></motion.div>
                                         </div>
                                     </div>
                                 </motion.div>
-                            ))}
+                                );
+                            })}
+                            {(!stats?.top_hotspots || stats.top_hotspots.length === 0) && (
+                                <div className="text-center text-slate-500 py-8">
+                                    No active hotspots found.
+                                </div>
+                            )}
                         </div>
                     </CardContent>
                 </Card>

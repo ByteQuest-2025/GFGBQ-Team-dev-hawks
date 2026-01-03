@@ -24,6 +24,11 @@ interface Grievance {
   state?: string;
   district?: string;
   assignee_id?: number;
+  image_url?: string;
+  media?: {
+      url: string;
+      type: string;
+  }[];
 }
 
 interface Officer {
@@ -244,11 +249,61 @@ export default function AdminGrievances() {
                                             </div>
                                             
                                             <div className="flex gap-2">
+                                                {g.image_url && (
+                                                    <Dialog>
+                                                        <DialogTrigger asChild>
+                                                            <Button variant="outline" size="sm">
+                                                                View Evidence
+                                                            </Button>
+                                                        </DialogTrigger>
+                                                        <DialogContent className="max-w-3xl">
+                                                            <DialogHeader>
+                                                                <DialogTitle>Grievance Evidence</DialogTitle>
+                                                            </DialogHeader>
+                                                            <div className="mt-4">
+                                                                <img 
+                                                                    src={`http://127.0.0.1:8000${g.image_url}`} 
+                                                                    alt="Grievance Evidence" 
+                                                                    className="w-full rounded-lg border max-h-[600px] object-contain"
+                                                                />
+                                                            </div>
+                                                        </DialogContent>
+                                                    </Dialog>
+                                                )}
+
                                                 {g.status === "Pending Verification" && (
-                                                    <Button size="sm" className="bg-green-600 hover:bg-green-700" onClick={() => handleVerify(g.id)}>
-                                                        <CheckCircle className="w-4 h-4 mr-2" />
-                                                        Verify
-                                                    </Button>
+                                                    <Dialog>
+                                                        <DialogTrigger asChild>
+                                                            <Button size="sm" className="bg-green-600 hover:bg-green-700">
+                                                                <CheckCircle className="w-4 h-4 mr-2" />
+                                                                Verify
+                                                            </Button>
+                                                        </DialogTrigger>
+                                                        <DialogContent className="max-w-3xl">
+                                                            <DialogHeader>
+                                                                <DialogTitle>Verify Grievance Resolution</DialogTitle>
+                                                            </DialogHeader>
+                                                            <div className="space-y-4">
+                                                                <p className="font-medium">Resolution Proof:</p>
+                                                                {g.media && g.media.find(m => m.type === "resolution_image") ? (
+                                                                    <img 
+                                                                        src={`http://127.0.0.1:8000${g.media.find(m => m.type === "resolution_image")?.url}`} 
+                                                                        alt="Resolution Proof" 
+                                                                        className="w-full rounded-lg border max-h-[500px] object-contain"
+                                                                    />
+                                                                ) : (
+                                                                    <div className="p-8 bg-gray-100 rounded-lg text-center text-gray-500">
+                                                                        No resolution proof uploaded.
+                                                                    </div>
+                                                                )}
+                                                                <div className="flex justify-end gap-2 pt-4">
+                                                                    <Button onClick={() => handleVerify(g.id)} className="w-full sm:w-auto">
+                                                                        Confirm Verification
+                                                                    </Button>
+                                                                </div>
+                                                            </div>
+                                                        </DialogContent>
+                                                    </Dialog>
                                                 )}
 
                                                 {(g.status === "New" || g.status === "Assigned") && (

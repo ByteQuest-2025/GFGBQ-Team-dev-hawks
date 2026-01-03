@@ -148,11 +148,16 @@ class Grievance(GrievanceBase):
     class Config:
         from_attributes = True
 
+class Hotspot(BaseModel):
+    name: str
+    count: int
+
 class DashboardStats(BaseModel):
     total_grievances: int
     open_grievances: int
     resolved_grievances: int
     critical_grievances: int
+    top_hotspots: List[Hotspot] = []
 
 class DepartmentBase(BaseModel):
     name: str

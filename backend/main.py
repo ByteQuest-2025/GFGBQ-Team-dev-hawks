@@ -18,6 +18,10 @@ async def startup_event():
         print(f"⚠️  Warning: Could not create tables: {e}")
         print("   The server will still start, but database operations may fail.")
 
+import os
+if not os.path.exists("uploads"):
+    os.makedirs("uploads")
+
 app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
 
 # CORS

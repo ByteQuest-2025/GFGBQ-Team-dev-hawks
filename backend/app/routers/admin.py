@@ -33,7 +33,8 @@ def assign_grievance(
         raise HTTPException(status_code=400, detail="Invalid officer selected")
 
     # Enforce matching rules
-    if officer.department_id != db_grievance.department_id:
+    # If grievance has a department, it must match officer's department
+    if db_grievance.department_id and officer.department_id != db_grievance.department_id:
         raise HTTPException(status_code=400, detail="Officer department does not match grievance department")
     
     # State and District Check
@@ -53,6 +54,10 @@ def assign_grievance(
 
     db_grievance.assignee_id = officer.id
     db_grievance.status = models.GrievanceStatus.ASSIGNED
+    
+    # Update department if it was missing
+    if not db_grievance.department_id:
+        db_grievance.department_id = officer.department_id
 
     # Timeline
     db_timeline = models.Timeline(
@@ -66,6 +71,8 @@ def assign_grievance(
     db.refresh(db_grievance)
     return db_grievance
 
+from sqlalchemy import func, desc
+
 @router.get("/dashboard", response_model=schemas.DashboardStats)
 def get_dashboard_stats(db: Session = Depends(database.get_db)):
     total = db.query(models.Grievance).count()
@@ -73,11 +80,33 @@ def get_dashboard_stats(db: Session = Depends(database.get_db)):
     resolved_count = db.query(models.Grievance).filter(models.Grievance.status == models.GrievanceStatus.RESOLVED).count()
     critical_count = db.query(models.Grievance).filter(models.Grievance.priority == models.Priority.CRITICAL).count()
     
+    # Calculate hotspots
+    # Group by District and State for grievances that are NOT resolved
+    hotspots_query = (
+        db.query(
+            models.Grievance.district,
+            models.Grievance.state,
+            func.count(models.Grievance.id).label("count")
+        )
+        .filter(models.Grievance.status != models.GrievanceStatus.RESOLVED)
+        .filter(models.Grievance.district != None)
+        .group_by(models.Grievance.district, models.Grievance.state)
+        .order_by(desc("count"))
+        .limit(4)
+        .all()
+    )
+
+    top_hotspots = [
+        {"name": f"{h.district}, {h.state}" if h.state else h.district, "count": h.count}
+        for h in hotspots_query
+    ]
+
     return {
         "total_grievances": total,
         "open_grievances": open_count,
         "resolved_grievances": resolved_count,
-        "critical_grievances": critical_count
+        "critical_grievances": critical_count,
+        "top_hotspots": top_hotspots
     }
 
 @router.get("/officers", response_model=List[schemas.User])

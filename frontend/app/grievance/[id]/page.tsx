@@ -38,8 +38,11 @@ export default function GrievanceDetails() {
   const [rating, setRating] = useState(0);
   const [comment, setComment] = useState("");
   const [submittingFeedback, setSubmittingFeedback] = useState(false);
+  const [userRole, setUserRole] = useState<string | null>(null);
 
   useEffect(() => {
+    const role = typeof window !== 'undefined' ? localStorage.getItem('role') : null;
+    setUserRole(role);
     fetchGrievance();
     const interval = setInterval(fetchGrievance, 5000); // Poll every 5 seconds
     return () => clearInterval(interval);
@@ -197,7 +200,7 @@ export default function GrievanceDetails() {
                     </h3>
                     <div className="rounded-xl overflow-hidden border border-white/20 bg-black/40 relative group">
                         <img 
-                            src={`http://localhost:8000${grievance.image_url}`} 
+                            src={`http://127.0.0.1:8000${grievance.image_url}`} 
                             alt="Grievance Evidence" 
                             className="w-full max-h-[500px] object-cover transition-transform duration-500 group-hover:scale-105"
                         />
@@ -251,7 +254,7 @@ export default function GrievanceDetails() {
                 )}
                 
                 {/* Feedback Section */}
-                {grievance.status === "Resolved" && (
+                {grievance.status === "Resolved" && (grievance.feedback || (userRole !== "Admin" && userRole !== "FieldOfficer")) && (
                     <motion.div variants={item} className="border-t border-white/10 pt-8 mt-8">
                         <h3 className="text-xl font-semibold mb-6 flex items-center gap-2">
                             <span className="p-1 bg-green-500/20 rounded-md"><Star className="h-5 w-5 text-green-400" /></span>
