@@ -26,6 +26,7 @@ export default function SignupPage() {
   const [error, setError] = useState<string | null>(null);
 
   const [departments, setDepartments] = useState<any[]>([]);
+  const [deptLoading, setDeptLoading] = useState(false);
   // const [regions, setRegions] = useState<any[]>([]); // Deprecated
   const [selectedDepartment, setSelectedDepartment] = useState("");
   // const [selectedRegion, setSelectedRegion] = useState(""); // Deprecated
@@ -36,6 +37,7 @@ export default function SignupPage() {
 
   useEffect(() => {
     const fetchMetadata = async () => {
+      setDeptLoading(true);
       try {
         const [deptRes] = await Promise.all([
           api.get("/metadata/departments"),
@@ -45,6 +47,9 @@ export default function SignupPage() {
         // setRegions(regionRes.data);
       } catch (err) {
         console.error("Failed to fetch metadata", err);
+        setError("Failed to load departments. Please check your connection.");
+      } finally {
+        setDeptLoading(false);
       }
     };
     if (role === 'FieldOfficer') {
@@ -181,14 +186,20 @@ export default function SignupPage() {
                     <Building className="absolute left-3 top-3 h-4 w-4 text-gray-400 z-10" />
                     <Select onValueChange={setSelectedDepartment} value={selectedDepartment}>
                       <SelectTrigger className="pl-9">
-                        <SelectValue placeholder="Select Department" />
+                        <SelectValue placeholder={deptLoading ? "Loading..." : "Select Department"} />
                       </SelectTrigger>
                       <SelectContent>
-                        {departments.map((dept) => (
-                          <SelectItem key={dept.id} value={dept.id.toString()}>
-                            {dept.name}
-                          </SelectItem>
-                        ))}
+                        {deptLoading ? (
+                          <SelectItem value="loading" disabled>Loading departments...</SelectItem>
+                        ) : departments.length === 0 ? (
+                           <SelectItem value="none" disabled>No departments found</SelectItem>
+                        ) : (
+                          departments.map((dept) => (
+                            <SelectItem key={dept.id} value={dept.id.toString()}>
+                              {dept.name}
+                            </SelectItem>
+                          ))
+                        )}
                       </SelectContent>
                     </Select>
                   </div>
